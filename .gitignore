@@ -1,6 +1,37 @@
+# Dependencies
 node_modules/
-.vscode/
+
+# Next.js build output
 .next/
+out/
+build/
+
+# TypeScript
 *.tsbuildinfo
+
+# Environment (keep the example template)
 .env*
 !.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+
+# Claude Code
+CLAUDE.md
+
+# Editors and IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/
