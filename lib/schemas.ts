@@ -135,6 +135,7 @@ export const SmokeRunSummary = z.object({
   total_latency_ms: z.number().nonnegative(), // sum of per-call latencies
   wall_time_ms: z.number().nonnegative(), // how long the whole run took
   tokens: Usage, // summed over all calls
+  cost_usd: z.number().nonnegative().nullable(), // null when the model has no known price
 });
 export type SmokeRunSummary = z.infer<typeof SmokeRunSummary>;
 

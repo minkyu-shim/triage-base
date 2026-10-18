@@ -2,6 +2,7 @@
 import { APIError } from "openai";
 import { getDataset, isLabelled, sampleTickets, type Ticket } from "./datasets";
 import { llmModel } from "./llm";
+import { estimateCost } from "./pricing";
 import {
   formatIssues,
   TriageRequest,
@@ -135,6 +136,14 @@ export async function runSmokeTest(
 
   const called = results.filter((result) => result.status !== "invalid_input");
   const total_latency_ms = called.reduce((sum, r) => sum + r.latency_ms, 0);
+  const tokens = results.reduce(
+    (sum, r) => ({
+      input_tokens: sum.input_tokens + r.usage.input_tokens,
+      output_tokens: sum.output_tokens + r.usage.output_tokens,
+      total_tokens: sum.total_tokens + r.usage.total_tokens,
+    }),
+    ZERO_USAGE,
+  );
 
   return {
     summary: {
@@ -156,14 +165,8 @@ export async function runSmokeTest(
       avg_latency_ms: called.length ? Math.round(total_latency_ms / called.length) : 0,
       total_latency_ms,
       wall_time_ms,
-      tokens: results.reduce(
-        (sum, r) => ({
-          input_tokens: sum.input_tokens + r.usage.input_tokens,
-          output_tokens: sum.output_tokens + r.usage.output_tokens,
-          total_tokens: sum.total_tokens + r.usage.total_tokens,
-        }),
-        ZERO_USAGE,
-      ),
+      tokens,
+      cost_usd: estimateCost(model, tokens),
     },
     results,
   };

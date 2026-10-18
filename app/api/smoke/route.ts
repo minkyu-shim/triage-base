@@ -1,4 +1,5 @@
 import { formatIssues, SmokeRequest, SmokeResponse } from "../../../lib/schemas";
+import { appendRun } from "../../../lib/runLog";
 import { runSmokeTest } from "../../../lib/smoke";
 
 // A run makes up to 100 LLM calls, so it can take a minute or more.
@@ -32,6 +33,13 @@ export async function POST(request: Request) {
         { error: "The server built an invalid smoke test response.", details: formatIssues(response.error) },
         { status: 500 },
       );
+    }
+
+    // Log the run for /admin. A logging failure should not throw away results the user already paid for.
+    try {
+      await appendRun(response.data.summary);
+    } catch (error) {
+      console.error("Could not log smoke run:", error);
     }
 
     return Response.json(response.data);

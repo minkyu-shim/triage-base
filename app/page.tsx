@@ -103,7 +103,8 @@ export default function TriagePage() {
       <h1>Ticket triage</h1>
       <p>
         Paste a support ticket to get its category, priority and review flag.{" "}
-        <a href="/smoke">Run a smoke test</a> · <a href="/chat">Open the chat</a>
+        <a href="/smoke">Run a smoke test</a> · <a href="/admin">Run history</a> ·{" "}
+        <a href="/chat">Open the chat</a>
       </p>
 
       {/* noValidate: we validate with Zod ourselves so errors look the same everywhere. */}

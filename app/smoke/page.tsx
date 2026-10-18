@@ -19,6 +19,10 @@ function percent(value: number | null): string {
   return value === null ? "n/a" : `${Math.round(value * 100)}%`;
 }
 
+function usd(value: number | null): string {
+  return value === null ? "n/a" : `$${value.toFixed(6)}`;
+}
+
 export default function SmokePage() {
   const [dataset, setDataset] = useState<Dataset>("labelled_100");
   const [sampleSize, setSampleSize] = useState("10");
@@ -86,7 +90,7 @@ export default function SmokePage() {
       <h1>Smoke test</h1>
       <p>
         Triage a random sample of tickets and compare against the labels.{" "}
-        <a href="/">Back to triage</a>
+        <a href="/">Back to triage</a> · <a href="/admin">Run history</a>
       </p>
 
       <form onSubmit={startRun} aria-busy={isRunning} noValidate>
@@ -203,6 +207,7 @@ export default function SmokePage() {
                 Tokens: {run.summary.tokens.input_tokens} in · {run.summary.tokens.output_tokens} out ·{" "}
                 {run.summary.tokens.total_tokens} total
               </li>
+              <li>Estimated cost (paid tier): {usd(run.summary.cost_usd)}</li>
               <li>Model: {run.summary.model}</li>
             </ul>
           </section>
