@@ -191,7 +191,10 @@ export default function TriagePage() {
             </div>
             <p>{response.triage.summary}</p>
             <small className="meta">
-              {response.latency_ms} ms · {response.model}
+              Tokens: {response.usage.input_tokens} in ·{" "}
+              {response.usage.output_tokens} out ·{" "}
+              {response.usage.total_tokens} total · {response.latency_ms} ms ·{" "}
+              {response.model}
             </small>
           </article>
         ))}

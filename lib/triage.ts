@@ -92,5 +92,12 @@ export async function triageTicket(
     );
   }
 
-  return { triage: parsed.data, model, latency_ms };
+  // Map OpenAI-style field names to ours; default to 0 if the provider omits usage.
+  const usage = {
+    input_tokens: completion.usage?.prompt_tokens ?? 0,
+    output_tokens: completion.usage?.completion_tokens ?? 0,
+    total_tokens: completion.usage?.total_tokens ?? 0,
+  };
+
+  return { triage: parsed.data, model, latency_ms, usage };
 }

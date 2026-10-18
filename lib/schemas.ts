@@ -34,11 +34,21 @@ export const TriageResult = z.object({
 });
 export type TriageResult = z.infer<typeof TriageResult>;
 
+// Token usage of one LLM call. total_tokens comes from the provider and can exceed
+// input + output (Gemini counts hidden "thinking" tokens in the total).
+export const Usage = z.object({
+  input_tokens: z.number().int().nonnegative(),
+  output_tokens: z.number().int().nonnegative(),
+  total_tokens: z.number().int().nonnegative(),
+});
+export type Usage = z.infer<typeof Usage>;
+
 // What POST /api/triage returns on success.
 export const TriageResponse = z.object({
   triage: TriageResult,
   model: z.string(),
   latency_ms: z.number().nonnegative(),
+  usage: Usage,
 });
 export type TriageResponse = z.infer<typeof TriageResponse>;
 
