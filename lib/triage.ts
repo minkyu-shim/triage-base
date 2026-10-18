@@ -45,7 +45,8 @@ function buildUserMessage(input: TriageRequest): string {
     input.language ? `<language>${input.language}</language>` : "",
     input.customer_plan ? `<customer_plan>${input.customer_plan}</customer_plan>` : "",
   ].join("");
-  return `<ticket>${meta}<subject>${input.subject}</subject><body>${input.body}</body></ticket>`;
+  const subject = input.subject ? `<subject>${input.subject}</subject>` : "";
+  return `<ticket>${meta}${subject}<body>${input.body}</body></ticket>`;
 }
 
 export async function triageTicket(

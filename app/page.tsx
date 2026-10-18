@@ -103,12 +103,12 @@ export default function TriagePage() {
       <h1>Ticket triage</h1>
       <p>
         Paste a support ticket to get its category, priority and review flag.{" "}
-        <a href="/chat">Open the chat</a>
+        <a href="/smoke">Run a smoke test</a> · <a href="/chat">Open the chat</a>
       </p>
 
       {/* noValidate: we validate with Zod ourselves so errors look the same everywhere. */}
       <form onSubmit={submitTicket} aria-busy={isSending} noValidate>
-        <label htmlFor="subject">Subject</label>
+        <label htmlFor="subject">Subject (optional)</label>
         <input
           id="subject"
           value={subject}
@@ -177,7 +177,7 @@ export default function TriagePage() {
         {/* Plain JSX text only: React escapes it, so HTML in tickets is never executed. */}
         {results.map(({ subject, response }, index) => (
           <article className="message result" key={index}>
-            <strong>{subject}</strong>
+            <strong>{subject || "(no subject)"}</strong>
             <div className="badges">
               <span className={`badge category-${response.triage.category}`}>
                 {response.triage.category}
