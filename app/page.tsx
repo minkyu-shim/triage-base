@@ -1,66 +1,97 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import {
+  ErrorResponse,
+  formatIssues,
+  TriageRequest,
+  TriageResponse,
+} from "../lib/schemas";
 
-type Message = {
-  role: "user" | "assistant";
-  text: string;
+type TriageEntry = {
+  subject: string;
+  response: TriageResponse;
 };
 
-export default function ChatPage() {
-  const [text, setText] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+const LANGUAGES = ["", "en", "es", "fr", "de"] as const;
+
+export default function TriagePage() {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [language, setLanguage] = useState("");
+  const [plan, setPlan] = useState("");
+  const [results, setResults] = useState<TriageEntry[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [details, setDetails] = useState<string[]>([]);
 
-  async function sendMessage(event: FormEvent<HTMLFormElement>) {
+  async function submitTicket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSending || !text.trim()) return;
+    if (isSending) return;
 
-    const message = text;
-    setIsSending(true);
     setError(null);
+    setDetails([]);
 
+    // 1. Validate in the browser first, with the same schema the server uses.
+    //    Empty optional fields are sent as undefined, not "".
+    const input = TriageRequest.safeParse({
+      subject,
+      body,
+      language: language || undefined,
+      customer_plan: plan.trim() || undefined,
+    });
+    if (!input.success) {
+      setError("Please fix the ticket before sending it.");
+      setDetails(formatIssues(input.error));
+      return;
+    }
+
+    setIsSending(true);
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/api/triage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify(input.data),
       });
-      const data: unknown = await response.json();
 
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("The server returned a non-JSON reply.");
+      }
+
+      // 2. Non-2xx: show the server's error and its details, if it sent any.
       if (!response.ok) {
-        const detail =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof data.error === "string"
-            ? data.error
-            : "Unable to send your message. Please try again.";
-        throw new Error(detail);
+        const failure = ErrorResponse.safeParse(data);
+        setError(
+          failure.success
+            ? failure.data.error
+            : `Triage failed (HTTP ${response.status}).`,
+        );
+        setDetails(failure.success ? (failure.data.details ?? []) : []);
+        return;
       }
 
-      if (
-        typeof data !== "object" ||
-        data === null ||
-        !("answer" in data) ||
-        typeof data.answer !== "string"
-      ) {
-        throw new Error("The server returned an invalid reply. Please try again.");
+      // 3. 2xx: still validate. A wrong shape is an error, not something to render.
+      const success = TriageResponse.safeParse(data);
+      if (!success.success) {
+        setError("Server returned an unexpected response.");
+        setDetails(formatIssues(success.error));
+        return;
       }
 
-      const answer = data.answer;
-      setMessages((previous) => [
+      setResults((previous) => [
+        { subject: input.data.subject, response: success.data },
         ...previous,
-        { role: "user", text: message },
-        { role: "assistant", text: answer },
       ]);
-      setText("");
+      setSubject("");
+      setBody("");
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to send your message. Please try again.",
+          : "Unable to triage the ticket. Please try again.",
       );
     } finally {
       setIsSending(false);
@@ -69,38 +100,102 @@ export default function ChatPage() {
 
   return (
     <main className="chat">
-      <h1>Support chat</h1>
-      <p>Send a message and get an echo reply.</p>
-      <section
-        className="messages"
-        role="log"
-        aria-label="Chat messages"
-        aria-live="polite"
-      >
-        {messages.length === 0 && <p>No messages yet.</p>}
-        {messages.map((message, index) => (
-          <div className={`message ${message.role}`} key={index}>
-            <strong>{message.role === "user" ? "You" : "Assistant"}</strong>
-            <p>{message.text}</p>
-          </div>
-        ))}
-      </section>
-      <form onSubmit={sendMessage} aria-busy={isSending}>
-        <label htmlFor="message">Your message</label>
-        <textarea
-          id="message"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Describe what you need help with..."
-          rows={3}
-          required
+      <h1>Ticket triage</h1>
+      <p>
+        Paste a support ticket to get its category, priority and review flag.{" "}
+        <a href="/chat">Open the chat</a>
+      </p>
+
+      {/* noValidate: we validate with Zod ourselves so errors look the same everywhere. */}
+      <form onSubmit={submitTicket} aria-busy={isSending} noValidate>
+        <label htmlFor="subject">Subject</label>
+        <input
+          id="subject"
+          value={subject}
+          onChange={(event) => setSubject(event.target.value)}
+          placeholder="Cannot export invoices"
           disabled={isSending}
         />
-        <button type="submit" disabled={isSending || !text.trim()}>
-          {isSending ? "Sending..." : "Send"}
+
+        <label htmlFor="body">Body</label>
+        <textarea
+          id="body"
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          placeholder="Describe the customer's problem..."
+          rows={8}
+          disabled={isSending}
+        />
+        <small className="hint">{body.length} / 12000 characters</small>
+
+        <div className="row">
+          <label>
+            Language
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              disabled={isSending}
+            >
+              {LANGUAGES.map((code) => (
+                <option key={code} value={code}>
+                  {code || "(unknown)"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Customer plan
+            <input
+              value={plan}
+              onChange={(event) => setPlan(event.target.value)}
+              placeholder="Business"
+              disabled={isSending}
+            />
+          </label>
+        </div>
+
+        <button type="submit" disabled={isSending}>
+          {isSending ? "Triaging..." : "Triage ticket"}
         </button>
-        {error && <p role="alert">{error}</p>}
+
+        {error && (
+          <div role="alert">
+            <p>{error}</p>
+            {details.length > 0 && (
+              <ul>
+                {details.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </form>
+
+      <section className="messages" aria-label="Triage results" aria-live="polite">
+        {results.length === 0 && <p>No tickets triaged yet.</p>}
+        {/* Plain JSX text only: React escapes it, so HTML in tickets is never executed. */}
+        {results.map(({ subject, response }, index) => (
+          <article className="message result" key={index}>
+            <strong>{subject}</strong>
+            <div className="badges">
+              <span className={`badge category-${response.triage.category}`}>
+                {response.triage.category}
+              </span>
+              <span className={`badge priority-${response.triage.priority}`}>
+                {response.triage.priority}
+              </span>
+              {response.triage.needs_human_review && (
+                <span className="badge review">needs human review</span>
+              )}
+            </div>
+            <p>{response.triage.summary}</p>
+            <small className="meta">
+              {response.latency_ms} ms · {response.model}
+            </small>
+          </article>
+        ))}
+      </section>
     </main>
   );
 }

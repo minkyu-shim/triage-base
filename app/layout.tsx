@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Support chat",
-  description: "A simple support ticket chat.",
+  title: "Ticket triage",
+  description: "Support ticket triage with an LLM.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

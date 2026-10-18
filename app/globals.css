@@ -48,6 +48,8 @@ form {
   margin-top: 20px;
 }
 
+input,
+select,
 textarea,
 button {
   padding: 12px;
@@ -75,4 +77,63 @@ button:disabled {
 
 [role="alert"] {
   color: #a51d25;
+}
+
+.messages {
+  margin-top: 24px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.row label {
+  display: grid;
+  gap: 6px;
+}
+
+.hint,
+.meta {
+  color: #5b6577;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dde3ee;
+  font-size: 0.85em;
+}
+
+.badge.priority-high {
+  background: #f8d7da;
+  color: #7a1520;
+}
+
+.badge.priority-medium {
+  background: #fff0c2;
+  color: #6b4e00;
+}
+
+.badge.priority-low {
+  background: #d9f2e1;
+  color: #135c2e;
+}
+
+.badge.review {
+  background: #7a1520;
+  color: white;
+}
+
+[role="alert"] ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
 }
