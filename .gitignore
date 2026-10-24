@@ -26,6 +26,11 @@ coverage/
 # Claude Code
 CLAUDE.md
 
+# Personal planning notes
+FULL_APP_PLAN.md
+HOMEWORK_PLAN.md
+TRIAGE-APP-REQUIREMENTS.md
+
 # Editors and IDEs
 .vscode/
 .idea/

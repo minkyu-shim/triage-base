@@ -186,3 +186,83 @@ td.mismatch {
 .summary h2 {
   margin-top: 0;
 }
+
+.row.three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .row,
+  .row.three {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 10px 0;
+}
+
+.fields dt {
+  color: #5b6577;
+}
+
+.fields dd {
+  margin: 0;
+}
+
+pre.plain {
+  margin: 8px 0;
+  white-space: pre-wrap;
+  font: inherit;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+button.secondary {
+  background: white;
+  color: #245dcc;
+  border-color: #245dcc;
+}
+
+.explain {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.explain button {
+  justify-self: start;
+  padding: 6px 12px;
+}
+
+caption {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: bold;
+}
+
+td.hit {
+  background: #d9f2e1;
+  color: #135c2e;
+  font-weight: bold;
+}
+
+td.better {
+  font-weight: bold;
+}
+
+table.confusion td,
+table.confusion th {
+  text-align: center;
+}
+
+h2 {
+  margin-top: 32px;
+}

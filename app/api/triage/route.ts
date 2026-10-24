@@ -1,50 +1,39 @@
+import { badRequest, failure, readJson } from "../../../lib/errors";
+import { resolveLlmModel } from "../../../lib/llm";
 import { formatIssues, TriageRequest, TriageResponse } from "../../../lib/schemas";
-import { triageTicket, TriageOutputError } from "../../../lib/triage";
+import { triageTicket } from "../../../lib/triage";
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = await readJson(request);
+  if (body === undefined) return badRequest("Invalid JSON body.");
 
-  // 1. Validate the request before spending an LLM call on it.
+  // 1. Validate the request before spending an LLM call on it (incl. the 5,000-char cap).
   const input = TriageRequest.safeParse(body);
   if (!input.success) {
-    return Response.json(
-      { error: "Invalid ticket.", details: formatIssues(input.error) },
-      { status: 400 },
-    );
+    return badRequest("Invalid ticket.", formatIssues(input.error));
   }
+  const model = resolveLlmModel(input.data.model);
+  if (!model) return badRequest("Unknown model.");
 
   try {
-    // 2. triageTicket() already validated the model output against TriageResult.
-    const result = await triageTicket(input.data);
+    // 2. triageTicket() already validated the model / DM output.
+    const result = await triageTicket(input.data, {
+      strategy: input.data.strategy,
+      model,
+      log: { route: "/api/triage" },
+    });
 
     // 3. Validate the full response shape before it reaches the user.
     const response = TriageResponse.safeParse(result);
     if (!response.success) {
       console.error("Triage response failed validation:", response.error);
       return Response.json(
-        { error: "The server built an invalid triage response.", details: formatIssues(response.error) },
+        { error: "The server built an invalid triage response.", code: "internal_error" },
         { status: 500 },
       );
     }
-
     return Response.json(response.data);
   } catch (error) {
-    if (error instanceof TriageOutputError) {
-      console.error("Invalid model output:", error.message, error.details);
-      return Response.json(
-        { error: `Model returned an invalid triage: ${error.message}`, details: error.details },
-        { status: 502 },
-      );
-    }
-    console.error("LLM call failed:", error);
-    return Response.json(
-      { error: "The triage assistant is unavailable. Please try again." },
-      { status: 502 },
-    );
+    return failure("Triage failed", error);
   }
 }

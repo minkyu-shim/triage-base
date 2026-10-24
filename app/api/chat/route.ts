@@ -1,52 +1,39 @@
-import { llm, llmModel } from "../../../lib/llm"
+import { badRequest, failure, readJson } from "../../../lib/errors";
+import { chatCompletion, completionText, llmModel } from "../../../lib/llm";
+import { CHAT_SYSTEM, PROMPT_VERSIONS } from "../../../lib/prompt";
+import { ChatRequest, formatIssues } from "../../../lib/schemas";
 
+// Stateless: the client sends the whole conversation every time and the server keeps nothing.
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = await readJson(request);
+  if (body === undefined) return badRequest("Invalid JSON body.");
 
+  // Checked before Zod so the error says why: only the server writes the system message.
   if (
-    typeof body !== "object" ||
-    body === null ||
-    !("message" in body) ||
-    typeof body.message !== "string" ||
-    !body.message.trim()
+    typeof body === "object" &&
+    body !== null &&
+    "messages" in body &&
+    Array.isArray(body.messages) &&
+    body.messages.some((m: unknown) => typeof m === "object" && m !== null && "role" in m && m.role === "system")
   ) {
-    return Response.json(
-      { error: "Please provide a non-empty message string." },
-      { status: 400 },
-    );
+    return badRequest("System messages are not allowed.");
+  }
+
+  const input = ChatRequest.safeParse(body);
+  if (!input.success) {
+    return badRequest("Invalid conversation.", formatIssues(input.error));
   }
 
   try {
-    const completion = await llm.chat.completions.create({
+    const { value: answer } = await chatCompletion({
+      log: { route: "/api/chat" },
+      promptVersion: PROMPT_VERSIONS.chat,
       model: llmModel,
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful support assistant. Answer briefly.",
-        },
-        { role: "user", content: body.message },
-      ],
+      messages: [{ role: "system", content: CHAT_SYSTEM }, ...input.data.messages],
+      parse: completionText,
     });
-
-    const answer = completion.choices[0]?.message?.content;
-    if (!answer) {
-      return Response.json(
-        { error: "The model returned no answer." },
-        { status: 502 },
-      );
-    }
-
     return Response.json({ answer });
   } catch (error) {
-    console.error("LLM call failed:", error);
-    return Response.json(
-      { error: "The assistant is unavailable. Please try again." },
-      { status: 502 },
-    );
+    return failure("Chat failed", error);
   }
 }

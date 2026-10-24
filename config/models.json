@@ -1,0 +1,13 @@
+{
+  "_note": "Allowed models and their prices in USD per 1M tokens. LLM prices: paid tier, text, from https://ai.google.dev/gemini-api/docs/pricing (checked 2026-10-24; free-tier calls cost $0, these show what a run would cost on the paid tier). gemini-3.8-flash is at its introductory price, valid until 2026-12-31. The 3.1 preview ID is not on the pricing page and is assumed to cost the same as the GA model. The gemini-2.5 models were removed: Google no longer serves them to new keys (404). DM prices: OpenRouter model page for typesafe/jev-1.13 (checked 2026-10-24; input only, output is free). Every key under \"llm\" appears in the model menu; models missing here get a null cost (\"n/a\") instead of a wrong number.",
+  "llm": {
+    "gemini-3.1-flash-lite-preview": { "inputPerMTok": 0.25, "outputPerMTok": 1.5 },
+    "gemini-3.1-flash-lite": { "inputPerMTok": 0.25, "outputPerMTok": 1.5 },
+    "gemini-3.5-flash-lite": { "inputPerMTok": 0.3, "outputPerMTok": 2.5 },
+    "gemini-3-flash-preview": { "inputPerMTok": 0.5, "outputPerMTok": 3.0 },
+    "gemini-3.8-flash": { "inputPerMTok": 0.75, "outputPerMTok": 3.75 }
+  },
+  "dm": {
+    "typesafe/jev-1.13": { "inputPerMTok": 0.042, "outputPerMTok": 0 }
+  }
+}

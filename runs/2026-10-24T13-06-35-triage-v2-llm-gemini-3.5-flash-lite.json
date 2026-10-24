@@ -1,0 +1,622 @@
+{
+  "summary": {
+    "run_id": "daab86dd-1069-4541-822d-ee77f5cdcb96",
+    "created_at": "2026-10-24T13:06:35.510Z",
+    "model": "gemini-3.5-flash-lite",
+    "dataset": "labelled_100",
+    "sample_size": 20,
+    "outcomes": {
+      "ok": 17,
+      "invalid_input": 0,
+      "invalid_output": 0,
+      "llm_error": 3
+    },
+    "category_mismatches": 0,
+    "priority_mismatches": 2,
+    "category_accuracy": 1,
+    "priority_accuracy": 0.8823529411764706,
+    "avg_latency_ms": 1993,
+    "total_latency_ms": 39853,
+    "wall_time_ms": 14189,
+    "tokens": {
+      "input_tokens": 10264,
+      "output_tokens": 1443,
+      "total_tokens": 11707
+    },
+    "cost_usd": 0.006686699999999999,
+    "strategy": "llm",
+    "prompt_version": "triage-v2",
+    "llm_model": "gemini-3.5-flash-lite",
+    "dm_model": null,
+    "dm_input_tokens": 0,
+    "llm_fallbacks": 0,
+    "review_accuracy": 1,
+    "avg_category_confidence": null,
+    "avg_priority_confidence": null,
+    "category_confusion": {
+      "technical_bug": {
+        "technical_bug": 5,
+        "feature_request": 0,
+        "account": 0,
+        "billing": 0
+      },
+      "feature_request": {
+        "technical_bug": 0,
+        "feature_request": 2,
+        "account": 0,
+        "billing": 0
+      },
+      "account": {
+        "technical_bug": 0,
+        "feature_request": 0,
+        "account": 3,
+        "billing": 0
+      },
+      "billing": {
+        "technical_bug": 0,
+        "feature_request": 0,
+        "account": 0,
+        "billing": 7
+      }
+    },
+    "priority_confusion": {
+      "low": {
+        "low": 5,
+        "medium": 0,
+        "high": 0
+      },
+      "medium": {
+        "low": 1,
+        "medium": 8,
+        "high": 0
+      },
+      "high": {
+        "low": 0,
+        "medium": 1,
+        "high": 2
+      }
+    },
+    "ticket_ids": [
+      "TCK-10148",
+      "TCK-10365",
+      "TCK-10337",
+      "TCK-10127",
+      "TCK-10040",
+      "TCK-10267",
+      "TCK-10403",
+      "TCK-10102",
+      "TCK-10200",
+      "TCK-10402",
+      "TCK-10117",
+      "TCK-10188",
+      "TCK-10482",
+      "TCK-10172",
+      "TCK-10019",
+      "TCK-10450",
+      "TCK-10329",
+      "TCK-10396",
+      "TCK-10066",
+      "TCK-10104"
+    ]
+  },
+  "results": [
+    {
+      "ticket_id": "TCK-10148",
+      "status": "ok",
+      "predicted": {
+        "category": "feature_request",
+        "priority": "low",
+        "needs_human_review": true,
+        "summary": "The customer is requesting a bulk delete feature for dashboards.",
+        "suggested_action": "Review the feature request for adding bulk delete capabilities to dashboards and flag the potential XSS attempt for security review.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "feature_request",
+        "priority": "low",
+        "needs_human_review": true
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 557,
+        "output_tokens": 80,
+        "total_tokens": 637
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003671,
+      "latency_ms": 2305
+    },
+    {
+      "ticket_id": "TCK-10365",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "high",
+        "needs_human_review": false,
+        "summary": "The customer was unexpectedly charged $9,600.50 for an Enterprise plan upgrade they did not authorize.",
+        "suggested_action": "Investigate the account upgrade history, verify the unauthorized charge, initiate the refund process if applicable, and revert the subscription to the previous plan.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "high",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 615,
+        "output_tokens": 97,
+        "total_tokens": 712
+      },
+      "dm_usage": null,
+      "cost_usd": 0.00042699999999999997,
+      "latency_ms": 2708
+    },
+    {
+      "ticket_id": "TCK-10337",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "low",
+        "needs_human_review": true,
+        "summary": "The customer is asking where they can download their invoices.",
+        "suggested_action": "Provide instructions on how to access and download invoices from the billing settings page, and review the ticket for prompt injection attempts.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "low",
+        "needs_human_review": true
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 538,
+        "output_tokens": 80,
+        "total_tokens": 618
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003614,
+      "latency_ms": 2582
+    },
+    {
+      "ticket_id": "TCK-10127",
+      "status": "ok",
+      "predicted": {
+        "category": "technical_bug",
+        "priority": "low",
+        "needs_human_review": false,
+        "summary": "The customer is asking how to filter a table widget by multiple values of the same column.",
+        "suggested_action": "Provide instructions on how to use multi-select filters in the table widget.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "technical_bug",
+        "priority": "low",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 547,
+        "output_tokens": 80,
+        "total_tokens": 627
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003641,
+      "latency_ms": 1397
+    },
+    {
+      "ticket_id": "TCK-10040",
+      "status": "ok",
+      "predicted": {
+        "category": "technical_bug",
+        "priority": "high",
+        "needs_human_review": false,
+        "summary": "Three saved dashboards disappeared from the workspace and are not in the trash, with a client presentation scheduled for Wednesday.",
+        "suggested_action": "Check the database logs and audit trails for recent deletion events associated with the user's workspace, and attempt to restore the dashboards.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "technical_bug",
+        "priority": "high",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 563,
+        "output_tokens": 95,
+        "total_tokens": 658
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0004064,
+      "latency_ms": 2345
+    },
+    {
+      "ticket_id": "TCK-10267",
+      "status": "ok",
+      "predicted": {
+        "category": "account",
+        "priority": "medium",
+        "needs_human_review": true,
+        "summary": "The customer is unable to log in after updating their email address.",
+        "suggested_action": "Verify the customer's account identity and assist them in resetting their login credentials.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "account",
+        "priority": "medium",
+        "needs_human_review": true
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 540,
+        "output_tokens": 74,
+        "total_tokens": 614
+      },
+      "dm_usage": null,
+      "cost_usd": 0.000347,
+      "latency_ms": 2076
+    },
+    {
+      "ticket_id": "TCK-10403",
+      "status": "ok",
+      "predicted": {
+        "category": "account",
+        "priority": "low",
+        "needs_human_review": false,
+        "summary": "The customer wants to stop receiving product update emails because the unsubscribe link is not working.",
+        "suggested_action": "Manually unsubscribe the customer from product update emails and verify email preferences in their account settings.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "account",
+        "priority": "low",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 563,
+        "output_tokens": 80,
+        "total_tokens": 643
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003689,
+      "latency_ms": 827
+    },
+    {
+      "ticket_id": "TCK-10102",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer is requesting a receipt for the June invoice INV-27015.",
+        "suggested_action": "Verify payment for invoice INV-27015 in the billing system and email the requested receipt to the customer.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 562,
+        "output_tokens": 87,
+        "total_tokens": 649
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003861,
+      "latency_ms": 2115
+    },
+    {
+      "ticket_id": "TCK-10200",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer requested a corrected invoice due to an incorrect VAT number.",
+        "suggested_action": "Verify the provided VAT number, update the billing details in the system, and issue a corrected invoice to the customer.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 596,
+        "output_tokens": 81,
+        "total_tokens": 677
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003813,
+      "latency_ms": 1818
+    },
+    {
+      "ticket_id": "TCK-10402",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer is asking how to cancel their Starter subscription for the upcoming billing cycle.",
+        "suggested_action": "Provide clear instructions on how to cancel the subscription via the account settings or process the cancellation directly for the customer.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 587,
+        "output_tokens": 83,
+        "total_tokens": 670
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003836,
+      "latency_ms": 1862
+    },
+    {
+      "ticket_id": "TCK-10117",
+      "status": "ok",
+      "predicted": {
+        "category": "technical_bug",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The board dashboard is displaying outdated figures from last Friday across multiple browsers.",
+        "suggested_action": "Investigate the data pipeline and cache for the board dashboard to ensure figures update correctly before Thursday's meeting.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "technical_bug",
+        "priority": "high",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": false,
+      "usage": {
+        "input_tokens": 583,
+        "output_tokens": 83,
+        "total_tokens": 666
+      },
+      "dm_usage": null,
+      "cost_usd": 0.00038239999999999997,
+      "latency_ms": 1992
+    },
+    {
+      "ticket_id": "TCK-10188",
+      "status": "ok",
+      "predicted": {
+        "category": "account",
+        "priority": "medium",
+        "needs_human_review": true,
+        "summary": "The customer is requesting a copy of all personal data held about them under GDPR.",
+        "suggested_action": "Forward this request to the privacy or compliance team to handle the data access request according to GDPR guidelines.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "account",
+        "priority": "medium",
+        "needs_human_review": true
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 567,
+        "output_tokens": 81,
+        "total_tokens": 648
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003726,
+      "latency_ms": 2024
+    },
+    {
+      "ticket_id": "TCK-10482",
+      "status": "ok",
+      "predicted": {
+        "category": "feature_request",
+        "priority": "low",
+        "needs_human_review": false,
+        "summary": "The customer is asking if white-label embedding and custom domains for dashboards are currently offered or planned.",
+        "suggested_action": "Inform the customer about the current roadmap for white-labeling features and whether custom embed domains are supported.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "feature_request",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": false,
+      "usage": {
+        "input_tokens": 558,
+        "output_tokens": 88,
+        "total_tokens": 646
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003874,
+      "latency_ms": 2209
+    },
+    {
+      "ticket_id": "TCK-10172",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer is unable to update their credit card details in billing settings due to a decline error.",
+        "suggested_action": "Check payment gateway logs for the specific decline reason and advise the customer on alternative payment methods or contacting their bank.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 572,
+        "output_tokens": 86,
+        "total_tokens": 658
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003866,
+      "latency_ms": 2260
+    },
+    {
+      "ticket_id": "TCK-10019",
+      "status": "ok",
+      "predicted": {
+        "category": "technical_bug",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer reports a significant performance regression on dashboards using HubSpot data sources since June 28.",
+        "suggested_action": "Investigate recent backend changes related to query concurrency or HubSpot data source loading times around June 28, and reply to the customer with findings.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "technical_bug",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 1185,
+        "output_tokens": 95,
+        "total_tokens": 1280
+      },
+      "dm_usage": null,
+      "cost_usd": 0.000593,
+      "latency_ms": 2116
+    },
+    {
+      "ticket_id": "TCK-10450",
+      "status": "ok",
+      "predicted": {
+        "category": "billing",
+        "priority": "low",
+        "needs_human_review": false,
+        "summary": "The customer is inquiring about switching from monthly to annual billing on their Enterprise plan and wants to know pricing details.",
+        "suggested_action": "Provide the customer with the annual pricing options, details on potential discounts, and the steps to switch their billing cycle.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "billing",
+        "priority": "low",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 567,
+        "output_tokens": 90,
+        "total_tokens": 657
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003951,
+      "latency_ms": 2256
+    },
+    {
+      "ticket_id": "TCK-10329",
+      "status": "ok",
+      "predicted": {
+        "category": "technical_bug",
+        "priority": "medium",
+        "needs_human_review": false,
+        "summary": "The customer experiences frequent session timeouts every ten minutes across multiple browsers.",
+        "suggested_action": "Investigate session persistence and token expiration settings for the user's account, and request the screen recording if needed.",
+        "confidence": null
+      },
+      "decided_by": "llm",
+      "expected": {
+        "category": "technical_bug",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "category_match": true,
+      "priority_match": true,
+      "usage": {
+        "input_tokens": 564,
+        "output_tokens": 83,
+        "total_tokens": 647
+      },
+      "dm_usage": null,
+      "cost_usd": 0.0003767,
+      "latency_ms": 1574
+    },
+    {
+      "ticket_id": "TCK-10396",
+      "status": "llm_error",
+      "expected": {
+        "category": "account",
+        "priority": "low",
+        "needs_human_review": false
+      },
+      "usage": null,
+      "dm_usage": null,
+      "cost_usd": null,
+      "latency_ms": 1930,
+      "error": "Too many requests to the model provider. Please wait a moment and try again."
+    },
+    {
+      "ticket_id": "TCK-10066",
+      "status": "llm_error",
+      "expected": {
+        "category": "feature_request",
+        "priority": "low",
+        "needs_human_review": false
+      },
+      "usage": null,
+      "dm_usage": null,
+      "cost_usd": null,
+      "latency_ms": 1626,
+      "error": "Too many requests to the model provider. Please wait a moment and try again."
+    },
+    {
+      "ticket_id": "TCK-10104",
+      "status": "llm_error",
+      "expected": {
+        "category": "feature_request",
+        "priority": "medium",
+        "needs_human_review": false
+      },
+      "usage": null,
+      "dm_usage": null,
+      "cost_usd": null,
+      "latency_ms": 1831,
+      "error": "Too many requests to the model provider. Please wait a moment and try again."
+    }
+  ]
+}

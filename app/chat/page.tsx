@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 
 type Message = {
   role: "user" | "assistant";
-  text: string;
+  content: string;
 };
 
 export default function ChatPage() {
@@ -17,7 +17,8 @@ export default function ChatPage() {
     event.preventDefault();
     if (isSending || !text.trim()) return;
 
-    const message = text;
+    // The server is stateless: send the whole conversation, including the new message.
+    const next: Message[] = [...messages, { role: "user", content: text }];
     setIsSending(true);
     setError(null);
 
@@ -25,7 +26,7 @@ export default function ChatPage() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ messages: next }),
       });
       const data: unknown = await response.json();
 
@@ -49,12 +50,10 @@ export default function ChatPage() {
         throw new Error("The server returned an invalid reply. Please try again.");
       }
 
+      // Only add the turn once it succeeded. On failure the history and the typed text
+      // stay as they were, so the user can simply retry.
       const answer = data.answer;
-      setMessages((previous) => [
-        ...previous,
-        { role: "user", text: message },
-        { role: "assistant", text: answer },
-      ]);
+      setMessages([...next, { role: "assistant", content: answer }]);
       setText("");
     } catch (error) {
       setError(
@@ -70,7 +69,10 @@ export default function ChatPage() {
   return (
     <main className="chat">
       <h1>Support chat</h1>
-      <p>Send a message to the LLM. <a href="/">Back to triage</a></p>
+      <p>
+        Chat with the LLM. It remembers the conversation until you reload the page.{" "}
+        <a href="/">Back to triage</a>
+      </p>
       <section
         className="messages"
         role="log"
@@ -81,7 +83,7 @@ export default function ChatPage() {
         {messages.map((message, index) => (
           <div className={`message ${message.role}`} key={index}>
             <strong>{message.role === "user" ? "You" : "Assistant"}</strong>
-            <p>{message.text}</p>
+            <p>{message.content}</p>
           </div>
         ))}
       </section>

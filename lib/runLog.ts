@@ -1,40 +1,40 @@
-// Server only: persists smoke-test summaries so /admin can list them.
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+// Server only: persists smoke-test runs.
+// - logs/smoke-runs.jsonl: one summary per line, listed by /admin (gitignored).
+// - runs/<date>-<prompt-version>-<strategy>-<model>.json: the full run, committed to compare runs.
+import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { SmokeRunSummary } from "./schemas";
+import { appendJsonl, readJsonl } from "./jsonl";
+import { SmokeRunSummary, type SmokeResponse } from "./schemas";
 
-// One JSON object per line (JSONL). Appending never rewrites older runs, so a crash
-// mid-write can at worst damage the last line, which readRuns() then skips.
-// Works with `npm run dev` / `npm run start`; serverless hosts (e.g. Vercel) have no durable disk.
 const LOG_FILE = path.join(process.cwd(), "logs", "smoke-runs.jsonl");
+const RUNS_DIR = path.join(process.cwd(), "runs");
 
 export async function appendRun(summary: SmokeRunSummary): Promise<void> {
-  await mkdir(path.dirname(LOG_FILE), { recursive: true });
-  await appendFile(LOG_FILE, JSON.stringify(summary) + "\n", "utf8");
+  await appendJsonl(LOG_FILE, summary);
 }
 
-// Newest first. Lines that are not valid JSON or no longer match the schema are skipped.
+// Newest first.
 export async function readRuns(): Promise<SmokeRunSummary[]> {
-  let text: string;
-  try {
-    text = await readFile(LOG_FILE, "utf8");
-  } catch (error) {
-    // No run logged yet.
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
+  return (await readJsonl(LOG_FILE, SmokeRunSummary)).reverse();
+}
 
-  const runs: SmokeRunSummary[] = [];
-  for (const line of text.split("\n")) {
-    if (!line.trim()) continue;
-    let json: unknown;
-    try {
-      json = JSON.parse(line);
-    } catch {
-      continue;
-    }
-    const parsed = SmokeRunSummary.safeParse(json);
-    if (parsed.success) runs.push(parsed.data);
-  }
-  return runs.reverse();
+// Model names can contain "/" (typesafe/jev-1.13) and strategies "+": keep file names safe.
+function slug(text: string): string {
+  return text.replace(/[^a-zA-Z0-9._-]+/g, "-");
+}
+
+// Writes the whole run and returns its path relative to the repo root.
+// Ticket subjects are dropped: the file is committed and should hold ids and outputs only.
+export async function writeRunFile(run: SmokeResponse): Promise<string> {
+  const { summary } = run;
+  // 2026-10-24T10:15:03.123Z -> 2026-10-24T10-15-03 (the time keeps two runs of a day apart)
+  const date = summary.created_at.slice(0, 19).replace(/:/g, "-");
+  const name = [date, summary.prompt_version ?? "triage-v2", summary.strategy ?? "llm", summary.model]
+    .map(slug)
+    .join("-");
+  const file = path.join(RUNS_DIR, `${name}.json`);
+  await mkdir(RUNS_DIR, { recursive: true });
+  const results = run.results.map(({ subject: _subject, ...rest }) => rest);
+  await writeFile(file, JSON.stringify({ summary, results }, null, 2) + "\n", "utf8");
+  return path.relative(process.cwd(), file);
 }

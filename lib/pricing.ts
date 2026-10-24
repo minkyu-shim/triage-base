@@ -1,22 +1,12 @@
+// Server only: cost estimates. The prices live in config/models.json, not in code.
+import { MODELS } from "./config";
 import type { Usage } from "./schemas";
 
-type Price = { inputPerMTok: number; outputPerMTok: number };
-
-// USD per 1M text tokens, paid tier, from https://ai.google.dev/gemini-api/docs/pricing
-// (checked 2026-10-18). Free-tier calls cost $0; these show what the run would cost on the paid tier.
-// Models missing from this table get a null cost ("n/a" in the UI) rather than a wrong number.
-const PRICES: Record<string, Price> = {
-  "gemini-3.1-flash-lite": { inputPerMTok: 0.25, outputPerMTok: 1.5 },
-  // The pricing page does not list the preview ID; assumed to cost the same as the GA model above.
-  "gemini-3.1-flash-lite-preview": { inputPerMTok: 0.25, outputPerMTok: 1.5 },
-  "gemini-3.5-flash-lite": { inputPerMTok: 0.3, outputPerMTok: 2.5 },
-  "gemini-2.5-flash": { inputPerMTok: 0.3, outputPerMTok: 2.5 },
-  "gemini-2.5-flash-lite": { inputPerMTok: 0.1, outputPerMTok: 0.4 },
-};
-
-export function estimateCost(model: string, usage: Usage): number | null {
-  const price = PRICES[model];
-  if (!price) return null;
+// null when the model has no price in the config or the provider reported no usage:
+// the UI then shows "n/a" rather than a wrong number.
+export function estimateCost(model: string, usage: Usage | null): number | null {
+  const price = MODELS.llm[model];
+  if (!price || !usage) return null;
   // Gemini bills hidden "thinking" tokens as output. They are in total_tokens but not in
   // output_tokens, so billed output is whatever the total has beyond the input.
   const billedOutput = Math.max(usage.output_tokens, usage.total_tokens - usage.input_tokens);
@@ -24,4 +14,11 @@ export function estimateCost(model: string, usage: Usage): number | null {
     (usage.input_tokens / 1_000_000) * price.inputPerMTok +
     (billedOutput / 1_000_000) * price.outputPerMTok
   );
+}
+
+// Decision models bill input tokens only (state + questions).
+export function estimateDmCost(model: string, inputTokens: number | null): number | null {
+  const price = MODELS.dm[model];
+  if (!price || inputTokens === null) return null;
+  return (inputTokens / 1_000_000) * price.inputPerMTok;
 }

@@ -1,45 +1,56 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { percent, usd } from "../../lib/format";
 import {
   ErrorResponse,
   formatIssues,
   SMOKE_MAX_SAMPLE,
   SmokeRequest,
   SmokeResponse,
+  type Confusion,
   type Dataset,
+  type Strategy,
 } from "../../lib/schemas";
+import { useModels } from "../useModels";
 
 const DATASETS: { value: Dataset; label: string }[] = [
   { value: "labelled_100", label: "Labelled 100 (with ground truth)" },
   { value: "unlabelled_500", label: "Unlabelled 500" },
 ];
 
-function percent(value: number | null): string {
-  return value === null ? "n/a" : `${Math.round(value * 100)}%`;
-}
-
-function usd(value: number | null): string {
-  return value === null ? "n/a" : `$${value.toFixed(6)}`;
-}
+const STRATEGIES: { value: Strategy; label: string }[] = [
+  { value: "llm", label: "LLM only" },
+  { value: "dm", label: "Decision model only" },
+  { value: "dm+llm", label: "Decision model + LLM" },
+];
 
 export default function SmokePage() {
+  const models = useModels();
   const [dataset, setDataset] = useState<Dataset>("labelled_100");
   const [sampleSize, setSampleSize] = useState("10");
+  const [strategy, setStrategy] = useState<Strategy>("llm");
+  const [model, setModel] = useState("");
   const [run, setRun] = useState<SmokeResponse | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<string[]>([]);
 
-  async function startRun(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // ticketIds: re-run exactly these tickets (same sample, other model or strategy) for a fair comparison.
+  async function startRun(ticketIds?: string[]) {
     if (isRunning) return;
 
     setError(null);
     setDetails([]);
 
     // Number("") is 0 and Number("abc") is NaN: both are rejected by the schema with a clear message.
-    const input = SmokeRequest.safeParse({ dataset, sampleSize: Number(sampleSize) });
+    const input = SmokeRequest.safeParse({
+      dataset: ticketIds && run ? run.summary.dataset : dataset,
+      sampleSize: ticketIds ? ticketIds.length : Number(sampleSize),
+      strategy,
+      model: model || undefined,
+      ticketIds,
+    });
     if (!input.success) {
       setError("Please fix the smoke test settings.");
       setDetails(formatIssues(input.error));
@@ -83,17 +94,23 @@ export default function SmokePage() {
     }
   }
 
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void startRun();
+  }
+
   const labelled = run?.summary.dataset === "labelled_100";
+  const summary = run?.summary;
 
   return (
     <main className="chat wide">
       <h1>Smoke test</h1>
       <p>
         Triage a random sample of tickets and compare against the labels.{" "}
-        <a href="/">Back to triage</a> · <a href="/admin">Run history</a>
+        <a href="/">Back to triage</a> · <a href="/admin">Admin</a>
       </p>
 
-      <form onSubmit={startRun} aria-busy={isRunning} noValidate>
+      <form onSubmit={onSubmit} aria-busy={isRunning} noValidate>
         <div className="row">
           <label>
             Dataset
@@ -120,11 +137,56 @@ export default function SmokePage() {
               disabled={isRunning}
             />
           </label>
+          <label>
+            Strategy
+            <select
+              value={strategy}
+              onChange={(event) => setStrategy(event.target.value as Strategy)}
+              disabled={isRunning}
+            >
+              {STRATEGIES.map((option) => (
+                <option key={option.value} value={option.value} disabled={option.value !== "llm" && models?.dm === null}>
+                  {option.label}
+                  {option.value !== "llm" && models?.dm === null ? " (not configured)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            LLM model
+            <select
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+              disabled={isRunning || strategy === "dm"}
+            >
+              <option value="">{models ? `${models.default_llm} (default)` : "server default"}</option>
+              {models?.llm
+                .filter((name) => name !== models.default_llm)
+                .map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+            </select>
+          </label>
         </div>
 
-        <button type="submit" disabled={isRunning}>
-          {isRunning ? `Running ${sampleSize} tickets...` : "Run smoke test"}
-        </button>
+        <div className="actions">
+          {run?.summary.ticket_ids && (
+            <button
+              type="button"
+              className="secondary"
+              disabled={isRunning}
+              onClick={() => void startRun(run.summary.ticket_ids)}
+              title="Run the same tickets again with the strategy and model selected above"
+            >
+              Re-run same {run.summary.ticket_ids.length} tickets
+            </button>
+          )}
+          <button type="submit" disabled={isRunning}>
+            {isRunning ? "Running..." : "Run smoke test"}
+          </button>
+        </div>
 
         {error && (
           <div role="alert">
@@ -140,7 +202,7 @@ export default function SmokePage() {
         )}
       </form>
 
-      {run && (
+      {run && summary && (
         <>
           <div className="table-wrap">
             <table>
@@ -153,6 +215,8 @@ export default function SmokePage() {
                   {labelled && <th>Expected category</th>}
                   <th>Predicted priority</th>
                   {labelled && <th>Expected priority</th>}
+                  <th>Review</th>
+                  {summary.strategy !== "llm" && <th>DM confidence (cat / prio)</th>}
                   <th>Tokens</th>
                   <th>Latency</th>
                 </tr>
@@ -163,7 +227,11 @@ export default function SmokePage() {
                   <tr key={result.ticket_id}>
                     <td>{result.ticket_id}</td>
                     <td>{result.subject || "(no subject)"}</td>
-                    <td title={result.error}>{result.status}</td>
+                    <td title={result.error}>
+                      {result.status}
+                      {result.decided_by === "llm_fallback" && <small className="meta"> (LLM fallback)</small>}
+                      {result.error && <small className="meta"> {result.error}</small>}
+                    </td>
                     <td className={result.category_match === false ? "mismatch" : undefined}>
                       {result.predicted?.category ?? "—"}
                     </td>
@@ -172,7 +240,21 @@ export default function SmokePage() {
                       {result.predicted?.priority ?? "—"}
                     </td>
                     {labelled && <td>{result.expected?.priority ?? "—"}</td>}
-                    <td>{result.usage.total_tokens}</td>
+                    <td>
+                      {result.predicted ? (result.predicted.needs_human_review ? "yes" : "no") : "—"}
+                      {result.expected && <small className="meta"> (label: {result.expected.needs_human_review ? "yes" : "no"})</small>}
+                    </td>
+                    {summary.strategy !== "llm" && (
+                      <td>
+                        {result.predicted?.confidence
+                          ? `${percent(result.predicted.confidence.category)} / ${percent(result.predicted.confidence.priority)}`
+                          : "—"}
+                      </td>
+                    )}
+                    <td>
+                      {result.usage ? result.usage.total_tokens : "—"}
+                      {result.dm_usage && <small className="meta"> + DM {result.dm_usage.input_tokens}</small>}
+                    </td>
                     <td>{result.latency_ms} ms</td>
                   </tr>
                 ))}
@@ -186,33 +268,82 @@ export default function SmokePage() {
               {labelled && (
                 <>
                   <li>
-                    Category mismatches: {run.summary.category_mismatches} / {run.summary.outcomes.ok}{" "}
-                    (accuracy {percent(run.summary.category_accuracy)})
+                    Category mismatches: {summary.category_mismatches} / {summary.outcomes.ok}{" "}
+                    (accuracy {percent(summary.category_accuracy)}
+                    {summary.avg_category_confidence != null && `, avg DM confidence ${percent(summary.avg_category_confidence)}`})
                   </li>
                   <li>
-                    Priority mismatches: {run.summary.priority_mismatches} / {run.summary.outcomes.ok}{" "}
-                    (accuracy {percent(run.summary.priority_accuracy)})
+                    Priority mismatches: {summary.priority_mismatches} / {summary.outcomes.ok}{" "}
+                    (accuracy {percent(summary.priority_accuracy)}
+                    {summary.avg_priority_confidence != null && `, avg DM confidence ${percent(summary.avg_priority_confidence)}`})
                   </li>
+                  <li>Human-review flag accuracy: {percent(summary.review_accuracy)}</li>
                 </>
               )}
               <li>
-                Outcomes: {run.summary.outcomes.ok} ok · {run.summary.outcomes.invalid_input} invalid input ·{" "}
-                {run.summary.outcomes.invalid_output} invalid output · {run.summary.outcomes.llm_error} LLM errors
+                Outcomes: {summary.outcomes.ok} ok · {summary.outcomes.invalid_input} invalid input ·{" "}
+                {summary.outcomes.invalid_output} invalid output · {summary.outcomes.llm_error} provider errors
+                {summary.strategy === "dm+llm" && ` · ${summary.llm_fallbacks ?? 0} LLM fallbacks`}
               </li>
               <li>
-                Latency: {run.summary.avg_latency_ms} ms average · run took{" "}
-                {(run.summary.wall_time_ms / 1000).toFixed(1)} s
+                Latency: {summary.avg_latency_ms} ms average · run took {(summary.wall_time_ms / 1000).toFixed(1)} s
               </li>
               <li>
-                Tokens: {run.summary.tokens.input_tokens} in · {run.summary.tokens.output_tokens} out ·{" "}
-                {run.summary.tokens.total_tokens} total
+                LLM tokens: {summary.tokens.input_tokens} in · {summary.tokens.output_tokens} out ·{" "}
+                {summary.tokens.total_tokens} total
+                {summary.dm_model && ` · DM input tokens: ${summary.dm_input_tokens ?? 0}`}
               </li>
-              <li>Estimated cost (paid tier): {usd(run.summary.cost_usd)}</li>
-              <li>Model: {run.summary.model}</li>
+              <li>Estimated cost (paid tier): {usd(summary.cost_usd)}</li>
+              <li>
+                Strategy: {summary.strategy ?? "llm"} · prompt {summary.prompt_version} · model {summary.model}
+              </li>
+              {summary.run_file && <li>Saved to {summary.run_file}</li>}
             </ul>
+
+            {summary.category_confusion && (
+              <ConfusionTable title="Category confusion (rows: label, columns: predicted)" matrix={summary.category_confusion} />
+            )}
+            {summary.priority_confusion && (
+              <ConfusionTable title="Priority confusion (rows: label, columns: predicted)" matrix={summary.priority_confusion} />
+            )}
           </section>
         </>
       )}
     </main>
+  );
+}
+
+function ConfusionTable({ title, matrix }: { title: string; matrix: Confusion }) {
+  const options = Object.keys(matrix);
+  return (
+    <div className="table-wrap">
+      <table className="confusion">
+        <caption>{title}</caption>
+        <thead>
+          <tr>
+            <th />
+            {options.map((predicted) => (
+              <th key={predicted}>{predicted}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {options.map((expected) => (
+            <tr key={expected}>
+              <th>{expected}</th>
+              {options.map((predicted) => {
+                const count = matrix[expected][predicted] ?? 0;
+                const className = count === 0 ? undefined : expected === predicted ? "hit" : "mismatch";
+                return (
+                  <td key={predicted} className={className}>
+                    {count}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
